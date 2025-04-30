@@ -1,16 +1,13 @@
 import os
 import json
 
-import sys
 from typing import Optional, List, Dict
 
 from .rome import ROMEHyperParams, apply_rome_to_model
 from .utils.prints import print_loud
 from .utils.template import Template
 from .utils.mtloader import load_model_and_tokenizer
-from .utils.generate import generate_fast, generate_interactive
-
-
+from .utils.generate import generate_fast
 
 from .common import (
     app, 
@@ -45,9 +42,8 @@ def ensure_model_cached(model_name: str):
     volumes=VOLUME_CONFIG,
     timeout=1 * HOURS,
 )
-def test_rome(
-    requests: List[Dict[str, str]], model: str, config: str, template: Optional[str] = "default",
-    output: Optional[str] = None, checkpointing: Optional[bool] = False
+def run_rome(
+    requests: List[Dict[str, str]], model: str, config: str, template: Optional[str] = "default", checkpointing: Optional[bool] = False
 ) -> None:
     r"""
     Edits a pre-trained model using model-editing algorithms.
@@ -97,13 +93,13 @@ def test_rome(
         post_update_text = generate_fast(model_new, tokenizer, queries, template, max_length=100)
         print("\n\n".join([queries[i] + " " + post_update_text[i] for i in range(len(queries))]))
 
-    print_loud("Starting interactively generation interface")
-    generate_interactive(model_new, tokenizer, template)
 
-    if output is not None:
-        model_new.config.use_cache = True
-        model_new.save_pretrained(output, max_shard_size="10GB")
-        tokenizer.save_pretrained(output)
+    print_loud("Saving model")
+    model_new.config.use_cache = True
+    model_new.save_pretrained("/runs/rome", max_shard_size="10GB")
+    tokenizer.save_pretrained("/runs/rome")
+    VOLUME_CONFIG["/runs"].commit()
+    print(f"Model saved to /runs/rome")
 
 
 @app.local_entrypoint()
@@ -112,11 +108,10 @@ def launch(
     model: str = "EleutherAI/gpt-j-6B", 
     config: str = "gpt-j-6b", 
     template: Optional[str] = "default",
-    output: Optional[str] = None, 
     checkpointing: Optional[bool] = False
 ):
     assert os.path.exists(data), "data not found"
     with open(data, "r", encoding="utf-8") as f:
         requests = json.load(f)
-    test_rome.remote(requests, model, config, template, output, checkpointing)
+    run_rome.remote(requests, model, config, template, checkpointing)
 

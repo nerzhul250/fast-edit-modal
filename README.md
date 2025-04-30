@@ -10,6 +10,6 @@ and then
 
 python3 -m modal setup
 
-and to run
+and to apply rome
 
 modal run -m fast-edit-modal.editor

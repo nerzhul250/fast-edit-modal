@@ -5,32 +5,6 @@ from transformers import PreTrainedModel, PreTrainedTokenizer, TextStreamer
 from .template import Template
 
 
-def generate_interactive(
-    model: PreTrainedModel,
-    tokenizer: PreTrainedTokenizer,
-    template: Template,
-    top_k: Optional[int] = 50,
-    max_length: Optional[int] = 200
-):
-    r"""
-    Puts generation in a loop. Allows users to repeatedly provide inputs
-    with which text is generated.
-    """
-
-    print("Enter `exit` to exit the interface.")
-
-    while True:
-        query = input("Input: ").strip()
-
-        if query == "exit":
-            break
-
-        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-        print("Output: ", end="", flush=True)
-        generate_fast(model, tokenizer, [query], template, top_k=top_k, max_length=max_length, streamer=streamer)[0]
-        print()
-
-
 def generate_fast(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizer,

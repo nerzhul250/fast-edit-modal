@@ -31,6 +31,13 @@ fastedit_image = (
     .entrypoint([])
 )
 
+# Create a dedicated inference image with only what's needed for inference
+inference_image = (
+     modal.Image.from_registry("nvidia/cuda:12.1.0-base-ubuntu22.04", add_python="3.10")
+    .pip_install("vllm==0.5.1", "torch==2.3.0")
+    .entrypoint([])
+)
+
 app = modal.App(
     APP_NAME,
     secrets=[
@@ -49,3 +56,12 @@ VOLUME_CONFIG: dict[Union[str, PurePosixPath], modal.Volume] = {
     "/pretrained": pretrained_volume,
     "/runs": runs_volume,
 }
+
+class Colors:
+    """ANSI color codes"""
+
+    GREEN = "\033[0;32m"
+    BLUE = "\033[0;34m"
+    GRAY = "\033[0;90m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
